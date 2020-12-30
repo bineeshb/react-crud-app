@@ -1,11 +1,37 @@
+import {
+  BrowserRouter as Router,
+  Redirect,
+  Route,
+  Switch
+} from 'react-router-dom';
+
 import './App.css';
-import Login from './login/Login';
+
+import AuthService from './services/auth';
+import AuthContextProvider from './contexts/AuthContext';
+
+import Home from './pages/Home';
+import Login from './pages/Login';
+
 
 function App() {
+  const authService = new AuthService();
+
   return (
-    <div className="App">
-      <Login />
-    </div>
+    <AuthContextProvider authService={authService}>
+      <Router>
+        <div className="App">
+          <Switch>
+            <Route path="/login">
+              {!authService.isUserValid() ? <Login /> : <Redirect to="/" />}
+            </Route>
+            <Route exact path="/">
+              {authService.isUserValid() ? <Home /> : <Redirect to="/login" />}
+            </Route>
+          </Switch>
+        </div>
+      </Router>
+    </AuthContextProvider>
   );
 }
 

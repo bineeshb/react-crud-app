@@ -1,18 +1,22 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { useHistory } from 'react-router-dom';
 
-export default function Login() {
+import { AuthContext } from "../contexts/AuthContext";
+
+const Login = () => {
   const [loginDetails, setLoginDetails] = useState({
     username: null,
     password: null
   });
   const [loginErrors, setLoginErrors] = useState({});
+  const history = useHistory();
+  const authContext = useContext(AuthContext);
 
   function inputLoginDetails(event) {
     const { name, value } = event.target;
-    setLoginDetails({
-      ...loginDetails,
-      [name]: value
-    });
+
+    setLoginDetails({ ...loginDetails, [name]: value });
+    setLoginErrors({ ...loginErrors, [name]: null });
   }
 
   function isMinLength(field, value) {
@@ -39,7 +43,13 @@ export default function Login() {
     setLoginErrors(formErrors);
 
     if (isFormValid) {
-      console.log(loginDetails);
+      const { success } = authContext.login(loginDetails.username, loginDetails.password);
+
+      if (success) {
+        history.push('');
+      } else {
+        console.error('Invalid credentials');
+      }
     } else {
       console.error('Form is invalid', loginErrors);
     }
@@ -64,3 +74,5 @@ export default function Login() {
     </form>
   );
 }
+
+export default Login;
