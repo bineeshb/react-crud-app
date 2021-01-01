@@ -22,12 +22,12 @@ function App() {
       <Router>
         <div className="App">
           <Switch>
-            <Route path="/login">
-              {!authService.isUserValid() ? <Login /> : <Redirect to="/" />}
-            </Route>
-            <Route exact path="/">
-              {authService.isUserValid() ? <Home /> : <Redirect to="/login" />}
-            </Route>
+            <Route path="/login" render={() => (
+              !authService.isUserValid() ? <Login /> : <Redirect to="/" />
+            )} />
+            <Route exact path="/" render={() => (
+              authService.isUserValid() ? <Home /> : <Redirect to="/login" />
+            )} />
           </Switch>
         </div>
       </Router>

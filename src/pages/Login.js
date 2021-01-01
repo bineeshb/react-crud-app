@@ -46,7 +46,7 @@ const Login = () => {
       const { success } = authContext.login(loginDetails.username, loginDetails.password);
 
       if (success) {
-        history.push('');
+        history.push('/');
       } else {
         console.error('Invalid credentials');
       }

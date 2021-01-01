@@ -58,7 +58,6 @@ class Home extends Component {
   logoutUser() {
     this.context.logout();
     this.props.history.push('/login');
-    // console.log('home - logoutUser');
   }
 
   render() {

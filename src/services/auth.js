@@ -29,7 +29,6 @@ class AuthService {
   }
 
   logoutUser() {
-    // console.log('auth - logoutUser');
     sessionStorage.clear();
     this.user = {
       username: null,
@@ -42,13 +41,12 @@ class AuthService {
 
   isUserValid() {
     const loggedUserSession = this.getLoggedUser().sessionId;
-    // console.log('isUserValid', !!loggedUserSession && loggedUserSession === this.user.sessionId);
     return !!loggedUserSession && loggedUserSession === this.user.sessionId;
   }
 
   getLoggedUser() {
     const loggedUser = sessionStorage.getItem(storageKey);
-    // console.log('loggedUser', loggedUser);
+
     return loggedUser ? JSON.parse(loggedUser) : ({
       username: null,
       isAdmin: false,
