@@ -7,27 +7,32 @@ import {
 
 import './App.css';
 
-import AuthService from './services/auth';
 import AuthContextProvider from './contexts/AuthContext';
+import ItemsContextProvider from './contexts/ItemsContext';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
 
 
 function App() {
-  const authService = new AuthService();
+  const isUserValid = () => {
+    const loggedInUser = JSON.parse(sessionStorage.getItem('userDetails'));
+    return loggedInUser && loggedInUser.sessionId !== null ? true : false;
+  };
 
   return (
-    <AuthContextProvider authService={authService}>
+    <AuthContextProvider>
       <Router>
         <div className="App">
           <Switch>
             <Route path="/login" render={() => (
-              !authService.isUserValid() ? <Login /> : <Redirect to="/" />
+              !isUserValid() ? <Login /> : <Redirect to="/" />
             )} />
-            <Route exact path="/" render={() => (
-              authService.isUserValid() ? <Home /> : <Redirect to="/login" />
-            )} />
+            <ItemsContextProvider>
+              <Route exact path="/" render={() => (
+                isUserValid() ? <Home /> : <Redirect to="/login" />
+              )} />
+            </ItemsContextProvider>
           </Switch>
         </div>
       </Router>

@@ -1,92 +1,82 @@
-import { Component } from 'react';
-import { withRouter } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { AuthContext } from '../contexts/AuthContext';
-import ItemsService from '../services/items';
+import { ItemsContext } from '../contexts/ItemsContext';
 
 import Item from '../components/Item';
 
-class Home extends Component {
-  errors = {
-    totalItems: null
-  };
+const Home = () => {
+  const { user: { username, isAdmin }, authDispatch } = useContext(AuthContext);
+  const { itemsDetails, itemsDispatch } = useContext(ItemsContext);
+  const history = useHistory();
 
-  constructor(props) {
-    super(props);
-    this.itemsService = new ItemsService();
-    const { totalItems, items } = this.itemsService.getDetails();
-    this.state = { totalItems, items };
+  const { totalItems, items } = itemsDetails;
+  const [details, setDetails] = useState({ totalItems, items });
+  const [errors, setErrors] = useState({ totalItems: null });
+
+  useEffect(() => {
+    itemsDispatch({ type: 'UPDATE_ITEMS', details });
+  }, [details]);
+
+  const getSumOfItems = () => {
+    return details.items.reduce((sum, { count }) => sum + count, 0);
   }
 
-  static contextType = AuthContext;
-
-  get sumOfItems() {
-    return this.state.items.reduce((sum, { count }) => sum + count, 0);
+  const isItemsLessThanTotal = () => {
+    return getSumOfItems() < details.totalItems;
   }
 
-  get canAddItems() {
-    return this.sumOfItems < this.state.totalItems;
-  }
+  const updateTotalItems = newValue => {
+    let items = details.items;
+    setErrors({ totalItems: null });
 
-  updateTotalItems(newValue) {
-    let items = this.state.items;
-    this.errors.totalItems = null;
-
-    if (newValue < this.sumOfItems) {
-      items = this.state.items.map(item => ({ ...item, count: 0 }));
+    if (newValue < getSumOfItems()) {
+      items = details.items.map(item => ({ ...item, count: 0 }));
     }
 
     if (isNaN(newValue) || newValue < 1) {
-      this.errors.totalItems = 'Total Items should be a number and greater than 1';
+      setErrors({ totalItems: 'Total Items should be a number and greater than 1' });
     }
 
-    this.saveItemsData({ totalItems: newValue, items });
+    setDetails({ totalItems: newValue, items });
   }
 
-  updateItemCount(updateItem, updateCountBy) {
-    const updatedItems = this.state.items.map(item => item.name === updateItem.name ? { ...item, count: (item.count + updateCountBy) } : item);
+  const updateItemCount = (updateItem, updateCountBy) => {
+    const updatedItems = details.items.map(item => item.name === updateItem.name ? { ...item, count: (item.count + updateCountBy) } : item);
 
-    this.saveItemsData({ items: updatedItems });
+    setDetails({ ...details, items: updatedItems });
   }
 
-  saveItemsData(updatedData) {
-    this.setState(updatedData, () => {
-      this.itemsService.updateDetails(this.state);
-    });
+  const logoutUser = () => {
+    authDispatch({ type: 'LOGOUT' });
+    history.push('/login');
   }
 
-  logoutUser() {
-    this.context.logout();
-    this.props.history.push('/login');
-  }
-
-  render() {
-    const { username, isAdmin } = this.context.user;
-    return (
+  return (
+    <div>
+      <h1>Welcome, {username}</h1>
+      <button onClick={logoutUser}>Logout</button>
+      {isAdmin && <div>
+        <label htmlFor="totalItems">Total Items*</label>
+        <input type="number" name="totalItems" id="totalItems" min="1"
+          value={details.totalItems}
+          onChange={e => updateTotalItems(e.target.value)} required />
+        {errors.totalItems && <div>{errors.totalItems}</div>}
+      </div>}
       <div>
-        <h1>Welcome, {username}</h1>
-        <button onClick={this.logoutUser.bind(this)}>Logout</button>
-        {isAdmin && <div>
-          <label htmlFor="totalItems">Total Items*</label>
-          <input type="number" name="totalItems" id="totalItems" min="1"
-            value={this.state.totalItems}
-            onChange={e => this.updateTotalItems(e.target.value)} required />
-          {this.errors.totalItems && <div>{this.errors.totalItems}</div>}
-        </div>}
-        <div>
-          <ul>
-            {this.state.items.map((item, index) => (
-              <li key={index}>
-                <Item item={item}
-                  updateItemCount={this.updateItemCount.bind(this)}
-                  isAddAllowed={isAdmin && this.canAddItems} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul>
+          {details.items.map((item, index) => (
+            <li key={index}>
+              <Item item={item}
+                updateItemCount={updateItemCount}
+                isAddAllowed={isAdmin && isItemsLessThanTotal()} />
+            </li>
+          ))}
+        </ul>
       </div>
-    );
-  }
+    </div>
+  );
 }
  
-export default withRouter(Home);
+export default Home;

@@ -1,47 +1,38 @@
-import { createContext, Component } from 'react';
+import { createContext, useReducer, useEffect } from 'react';
+
+import { authReducer } from '../reducers/authReducer';
 
 export const AuthContext = createContext();
 
-class AuthContextProvider extends Component {
-  constructor(props) {
-    super(props);
-    this.authService = props.authService;
-    this.state = {
-      user: this.authService.getLoggedUser(),
-      isUserValid: this.authService.isUserValid()
-    };
-  }
+const storageKey = 'userDetails';
 
-  login = (username, password) => {
-    const { success, user } = this.authService.loginUser(username, password);
+const AuthContextProvider = props => {
+  const getLoggedUser = () => {
+    const loggedUser = sessionStorage.getItem(storageKey);
 
-    if (success) {
-      this.setState({ user, isUserValid: success });
-    }
-
-    return { success };
-  }
-
-  logout = () => {
-    const { success } = this.authService.logoutUser();
-    this.setState({
-      user: {
-        username: null,
-        isAdmin: false,
-        sessionId: null
-      },
-      isUserValid: false
+    return loggedUser ? JSON.parse(loggedUser) : ({
+      username: null,
+      isAdmin: false,
+      sessionId: null
     });
-    return { success };
-  }
+  };
+  const [user, authDispatch] = useReducer(authReducer, {}, getLoggedUser);
 
-  render() { 
-    return (
-      <AuthContext.Provider value={{ ...this.state, login: this.login, logout: this.logout }}>
-        {this.props.children}
-      </AuthContext.Provider>
-    );
-  }
+  useEffect(() => {
+    const { username, sessionId } = user;
+
+    if (username && sessionId) {
+      sessionStorage.setItem(storageKey, JSON.stringify(user));
+    } else {
+      sessionStorage.clear();
+    }
+  }, [user]);
+
+  return (
+    <AuthContext.Provider value={{ user, authDispatch }}>
+      {props.children}
+    </AuthContext.Provider>
+  );
 }
  
 export default AuthContextProvider;
